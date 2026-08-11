@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigModule, getTypeOrmConfig } from './config';
-
-import { APP_FILTER } from '@nestjs/core';
 import {
   DatabaseExceptionFilter,
   DomainExceptionFilter,
   GrpcExceptionFilter,
 } from './common';
+
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -20,9 +21,9 @@ import {
       useFactory: getTypeOrmConfig,
     }),
 
-    CategoryModule,
-    ProductModule,
+    OrderModule,
   ],
+
   providers: [
     {
       provide: APP_FILTER,
