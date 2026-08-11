@@ -1,21 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
+import type { ClientGrpc } from '@nestjs/microservices';
 import { BaseService } from '../common';
-
-import { ListOrderRequest, OrderListResponse } from './interfaces';
+import { GRPC_CLIENTS, GRPC_SERVICES } from '../common';
+import {
+  CreateOrderRequest,
+  ListOrderRequest,
+  OrderListResponse,
+} from './interfaces';
 
 import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
 
+import type { UserGrpcService, CatalogGrpcService } from '../common';
+import { firstValueFrom } from 'rxjs';
+
 @Injectable()
 export class OrderService extends BaseService<Order> {
+  private readonly userService: UserGrpcService;
+  private readonly productService: CatalogGrpcService;
+
   constructor(
     @InjectRepository(Order)
     repository: Repository<Order>,
+
+    @Inject(GRPC_CLIENTS.USER)
+    userClient: ClientGrpc,
+
+    @Inject(GRPC_CLIENTS.CATALOG)
+    catalogClient: ClientGrpc,
   ) {
     super(repository);
+    this.userService = userClient.getService<UserGrpcService>(
+      GRPC_SERVICES.USER,
+    );
+
+    this.productService = catalogClient.getService<CatalogGrpcService>(
+      GRPC_SERVICES.PRODUCT,
+    );
+  }
+
+  override async create(request: CreateOrderRequest): Promise<Order> {
+    await this.validateUser(request.userId);
+
+    await this.validateProduct(request.productId);
+
+    const order = await super.create({
+      userId: request.userId,
+      productId: request.productId,
+      totalAmount: request.totalAmount,
+    });
+
+    return order;
   }
 
   async listOrders(request: ListOrderRequest): Promise<OrderListResponse> {
@@ -53,5 +90,20 @@ export class OrderService extends BaseService<Order> {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  private async validateUser(userId: number): Promise<void> {
+    await firstValueFrom(
+      this.userService.getById({
+        id: userId,
+      }),
+    );
+  }
+  private async validateProduct(productId: number): Promise<void> {
+    await firstValueFrom(
+      this.productService.getById({
+        id: productId,
+      }),
+    );
   }
 }
