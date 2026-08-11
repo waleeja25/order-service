@@ -33,14 +33,6 @@ export abstract class BaseService<T extends BaseEntity> {
     return entity;
   }
 
-  async update(id: number, data: DeepPartial<T>): Promise<T> {
-    const entity = await this.findById(id);
-
-    this.repository.merge(entity, data);
-
-    return this.repository.save(entity);
-  }
-
   async delete(id: number): Promise<void> {
     const entity = await this.findById(id);
 
