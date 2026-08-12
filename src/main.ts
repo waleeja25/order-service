@@ -1,20 +1,28 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+
 import { grpcConfig } from './config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.GRPC,
-      options: grpcConfig,
-    },
-  );
+  const app = await NestFactory.create(AppModule);
 
-  await app.listen();
+  const configService = app.get(ConfigService);
 
-  console.log('Order Service is running');
+  const port = configService.get<number>('app.port');
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: grpcConfig,
+  });
+
+  await app.startAllMicroservices();
+
+  await app.listen(port ?? 3003);
+
+  console.log(`Order Service HTTP running on port ${port ?? 3003}`);
+  console.log('Order Service gRPC is running');
 }
 
 bootstrap().catch((error) => {
