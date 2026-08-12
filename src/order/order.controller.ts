@@ -10,7 +10,7 @@ import { OrderService } from './order.service';
 import type { EntityIdRequest } from '../common';
 
 @Controller()
-@GrpcController('orderService')
+@GrpcController('OrderService')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 

@@ -14,7 +14,7 @@ async function bootstrap() {
 
   await app.listen();
 
-  console.log('Catalog Service is running');
+  console.log('Order Service is running');
 }
 
 bootstrap().catch((error) => {

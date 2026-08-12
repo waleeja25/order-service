@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { ClientGrpc } from '@nestjs/microservices';
-import { BaseService } from '../common';
+import { BaseService, ReferencedEntityMissingException } from '../common';
 import { GRPC_CLIENTS, GRPC_SERVICES } from '../common';
 import {
   CreateOrderRequest,
@@ -14,6 +14,8 @@ import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
 
 import type { UserGrpcService, CatalogGrpcService } from '../common';
+
+import { status as GrpcStatus } from '@grpc/grpc-js';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
@@ -42,9 +44,10 @@ export class OrderService extends BaseService<Order> {
   }
 
   override async create(request: CreateOrderRequest): Promise<Order> {
-    await this.validateUser(request.userId);
-
-    await this.validateProduct(request.productId);
+    await Promise.all([
+      this.validateUser(request.userId),
+      this.validateProduct(request.productId),
+    ]);
 
     const order = await super.create({
       userId: request.userId,
@@ -91,19 +94,44 @@ export class OrderService extends BaseService<Order> {
       },
     };
   }
-
-  private async validateUser(userId: number): Promise<void> {
-    await firstValueFrom(
-      this.userService.getById({
-        id: userId,
-      }),
+  private isGrpcNotFound(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === GrpcStatus.NOT_FOUND
     );
   }
+
+  private async validateUser(userId: number): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.userService.getById({
+          id: userId,
+        }),
+      );
+    } catch (error) {
+      if (this.isGrpcNotFound(error)) {
+        throw new ReferencedEntityMissingException('User', userId);
+      }
+
+      throw error;
+    }
+  }
+
   private async validateProduct(productId: number): Promise<void> {
-    await firstValueFrom(
-      this.productService.getById({
-        id: productId,
-      }),
-    );
+    try {
+      await firstValueFrom(
+        this.productService.getById({
+          id: productId,
+        }),
+      );
+    } catch (error) {
+      if (this.isGrpcNotFound(error)) {
+        throw new ReferencedEntityMissingException('Product', productId);
+      }
+
+      throw error;
+    }
   }
 }
