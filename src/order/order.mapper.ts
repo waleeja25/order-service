@@ -7,6 +7,7 @@ export class OrderMapper {
       id: order.id,
       userId: order.userId,
       productId: order.productId,
+      quantity: order.quantity,
       totalAmount: Number(order.totalAmount),
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString(),

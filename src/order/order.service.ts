@@ -13,7 +13,11 @@ import {
 import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
 
-import type { UserGrpcService, CatalogGrpcService } from '../common';
+import type {
+  UserGrpcService,
+  CatalogGrpcService,
+  ProductResponse,
+} from '../common';
 
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { firstValueFrom } from 'rxjs';
@@ -44,15 +48,16 @@ export class OrderService extends BaseService<Order> {
   }
 
   override async create(request: CreateOrderRequest): Promise<Order> {
-    await Promise.all([
+    const [, product] = await Promise.all([
       this.validateUser(request.userId),
-      this.validateProduct(request.productId),
+      this.fetchProduct(request.productId),
     ]);
 
     const order = await super.create({
       userId: request.userId,
       productId: request.productId,
-      totalAmount: request.totalAmount,
+      quantity: request.quantity,
+      totalAmount: product.price * request.quantity,
     });
 
     return order;
@@ -119,18 +124,15 @@ export class OrderService extends BaseService<Order> {
     }
   }
 
-  private async validateProduct(productId: number): Promise<void> {
+  private async fetchProduct(productId: number): Promise<ProductResponse> {
     try {
-      await firstValueFrom(
-        this.productService.getById({
-          id: productId,
-        }),
+      return await firstValueFrom(
+        this.productService.getById({ id: productId }),
       );
     } catch (error) {
       if (this.isGrpcNotFound(error)) {
         throw new ReferencedEntityMissingException('Product', productId);
       }
-
       throw error;
     }
   }

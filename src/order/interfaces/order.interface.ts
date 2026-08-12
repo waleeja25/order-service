@@ -1,13 +1,14 @@
 export interface CreateOrderRequest {
   userId: number;
   productId: number;
-  totalAmount: number;
+  quantity: number;
 }
 
 export interface OrderResponse {
   id: number;
   userId: number;
   productId: number;
+  quantity: number;
   totalAmount: number;
   createdAt: string;
   updatedAt: string;

@@ -16,6 +16,9 @@ export class Order extends BaseEntity {
   @Index()
   productId!: number;
 
+  @Column({ type: 'int' })
+  quantity!: number;
+
   @Column({
     type: 'decimal',
     precision: 10,
