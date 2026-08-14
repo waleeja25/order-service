@@ -2,30 +2,20 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { ClientGrpc } from '@nestjs/microservices';
+import { CatalogProto, OrderProto, UserProto } from 'microservices-proto';
 import { BaseService, ReferencedEntityMissingException } from '../common';
 import { GRPC_CLIENTS, GRPC_SERVICES } from '../common';
-import {
-  CreateOrderRequest,
-  ListOrderRequest,
-  OrderListResponse,
-} from './interfaces';
 
 import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
-
-import type {
-  UserGrpcService,
-  CatalogGrpcService,
-  ProductResponse,
-} from '../common';
 
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
-  private readonly userService: UserGrpcService;
-  private readonly productService: CatalogGrpcService;
+  private readonly userService: UserProto.UserServiceClient;
+  private readonly productService: CatalogProto.ProductServiceClient;
 
   constructor(
     @InjectRepository(Order)
@@ -38,16 +28,19 @@ export class OrderService extends BaseService<Order> {
     catalogClient: ClientGrpc,
   ) {
     super(repository);
-    this.userService = userClient.getService<UserGrpcService>(
+    this.userService = userClient.getService<UserProto.UserServiceClient>(
       GRPC_SERVICES.USER,
     );
 
-    this.productService = catalogClient.getService<CatalogGrpcService>(
-      GRPC_SERVICES.PRODUCT,
-    );
+    this.productService =
+      catalogClient.getService<CatalogProto.ProductServiceClient>(
+        GRPC_SERVICES.PRODUCT,
+      );
   }
 
-  override async create(request: CreateOrderRequest): Promise<Order> {
+  override async create(
+    request: OrderProto.CreateOrderRequest,
+  ): Promise<Order> {
     const [, product] = await Promise.all([
       this.validateUser(request.userId),
       this.fetchProduct(request.productId),
@@ -63,7 +56,9 @@ export class OrderService extends BaseService<Order> {
     return order;
   }
 
-  async listOrders(request: ListOrderRequest): Promise<OrderListResponse> {
+  async listOrders(
+    request: OrderProto.ListOrderRequest,
+  ): Promise<OrderProto.OrderListResponse> {
     const page = request.page > 0 ? request.page : 1;
 
     const limit =
@@ -124,7 +119,7 @@ export class OrderService extends BaseService<Order> {
     }
   }
 
-  private async fetchProduct(productId: number): Promise<ProductResponse> {
+  private async fetchProduct(productId: number): Promise<CatalogProto.Product> {
     try {
       return await firstValueFrom(
         this.productService.getById({ id: productId }),

@@ -1,8 +1,9 @@
+import { OrderProto } from 'microservices-proto';
+
 import { Order } from './entities';
-import { OrderResponse } from './interfaces';
 
 export class OrderMapper {
-  static toResponse(order: Order): OrderResponse {
+  static toResponse(order: Order): OrderProto.Order {
     return {
       id: order.id,
       userId: order.userId,
