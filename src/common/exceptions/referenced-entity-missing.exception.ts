@@ -1,4 +1,4 @@
-import { DomainException } from './domain.exception';
+import { DomainException } from '@microservices/microservice-common';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 
 export class ReferencedEntityMissingException extends DomainException {

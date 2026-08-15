@@ -1,5 +1,0 @@
-export const MYSQL_ERRORS = {
-  ROW_IS_REFERENCED: 1451,
-  DUPLICATE_ENTRY: 1062,
-  NO_REFERENCED_ROW: 1452,
-} as const;

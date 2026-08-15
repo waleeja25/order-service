@@ -1,10 +1,8 @@
 import { Catch, ExceptionFilter } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
-import { MYSQL_ERRORS } from '../constants';
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { throwError } from 'rxjs';
-
-import { grpcError } from './grpc-error';
+import { MYSQL_ERRORS, grpcError } from '@microservices/microservice-common';
 
 @Catch(QueryFailedError)
 export class DatabaseExceptionFilter implements ExceptionFilter<QueryFailedError> {
