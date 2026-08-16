@@ -12,10 +12,13 @@ async function bootstrap() {
 
   const port = configService.get<number>('app.port');
 
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.GRPC,
-    options: grpcConfig,
-  });
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.GRPC,
+      options: grpcConfig,
+    },
+    { inheritAppConfig: true },
+  );
 
   await app.startAllMicroservices();
 
