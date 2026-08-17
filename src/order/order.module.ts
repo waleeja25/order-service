@@ -9,10 +9,12 @@ import { OrderService } from './order.service';
 
 import { OrderController } from './order.controller';
 
+import { RabbitMQModule } from '../rabbitmq';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order]),
-
+    RabbitMQModule,
     ClientsModule.register([
       {
         name: GRPC_CLIENTS.USER,
@@ -20,7 +22,7 @@ import { OrderController } from './order.controller';
         options: {
           package: GRPC_PACKAGE.USER,
           protoPath: PROTO_PATH.USER,
-          url: 'localhost:50051',
+          url: '127.0.0.1:50051',
         },
       },
       {
@@ -29,7 +31,7 @@ import { OrderController } from './order.controller';
         options: {
           package: GRPC_PACKAGE.CATALOG,
           protoPath: PROTO_PATH.CATALOG,
-          url: 'localhost:50052',
+          url: '127.0.0.1:50052',
         },
       },
     ]),

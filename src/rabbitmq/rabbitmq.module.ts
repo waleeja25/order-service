@@ -30,6 +30,6 @@ import { RabbitMQService } from './rabbitmq.service';
     ]),
   ],
   providers: [RabbitMQService],
-  exports: [ClientsModule],
+  exports: [RabbitMQService],
 })
 export class RabbitMQModule {}

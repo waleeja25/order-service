@@ -13,4 +13,9 @@ export class RabbitMQService implements OnModuleInit {
 
     console.log('RabbitMQ connected successfully');
   }
+
+  publishOrderCreated(data: { orderId: number; userId: number }): void {
+    this.rabbitMQClient.emit('order.created', data);
+    console.log('Order-event created');
+  }
 }

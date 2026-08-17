@@ -11,6 +11,7 @@ import { OrderMapper } from './order.mapper';
 
 import { status as GrpcStatus } from '@grpc/grpc-js';
 import { firstValueFrom } from 'rxjs';
+import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -26,6 +27,8 @@ export class OrderService extends BaseService<Order> {
 
     @Inject(GRPC_CLIENTS.CATALOG)
     catalogClient: ClientGrpc,
+
+    private readonly rabbitMQService: RabbitMQService,
   ) {
     super(repository);
     this.userService = userClient.getService<UserProto.UserServiceClient>(
@@ -51,6 +54,11 @@ export class OrderService extends BaseService<Order> {
       productId: request.productId,
       quantity: request.quantity,
       totalAmount: product.price * request.quantity,
+    });
+
+    this.rabbitMQService.publishOrderCreated({
+      orderId: order.id,
+      userId: order.userId,
     });
 
     return order;
