@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 
 import appConfig from './app.config';
 import databaseConfig from './database.config';
+import { rabbitmqConfig } from './rabbitmq.config';
+
 import { envValidationSchema } from './env.validation';
 
 @Global()
@@ -12,7 +14,7 @@ import { envValidationSchema } from './env.validation';
       isGlobal: true,
       cache: true,
 
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, rabbitmqConfig],
 
       validationSchema: envValidationSchema,
     }),

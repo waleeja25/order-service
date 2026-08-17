@@ -10,4 +10,7 @@ export const envValidationSchema = Joi.object({
   DB_NAME: Joi.string().required(),
 
   GRPC_URL: Joi.string().required(),
+
+  RABBITMQ_URL: Joi.string().uri().required(),
+  RABBITMQ_NOTIFICATION_QUEUE: Joi.string().required(),
 });
