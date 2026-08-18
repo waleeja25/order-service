@@ -1,5 +1,6 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { RABBITMQ_ROUTING_KEYS } from './constants/rabbitmq.constants';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit {
@@ -15,7 +16,7 @@ export class RabbitMQService implements OnModuleInit {
   }
 
   publishOrderCreated(data: { orderId: number; userId: number }): void {
-    this.rabbitMQClient.emit('order.created', data);
+    this.rabbitMQClient.emit(RABBITMQ_ROUTING_KEYS.ORDER_CREATED, data);
     console.log('Order-event created');
   }
 }
