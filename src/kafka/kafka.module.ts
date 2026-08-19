@@ -13,9 +13,7 @@ import { KafkaService } from './kafka.service';
             clientId: 'order-service',
             brokers: [process.env.KAFKA_BROKER!],
           },
-          consumer: {
-            groupId: 'order-service-consumer',
-          },
+          producerOnlyMode: true,
         },
       },
     ]),
