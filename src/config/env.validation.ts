@@ -13,4 +13,6 @@ export const envValidationSchema = Joi.object({
 
   RABBITMQ_URL: Joi.string().uri().required(),
   RABBITMQ_NOTIFICATION_QUEUE: Joi.string().required(),
+
+  KAFKA_BROKER: Joi.string().required(),
 });

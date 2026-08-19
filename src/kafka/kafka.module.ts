@@ -11,7 +11,7 @@ import { KafkaService } from './kafka.service';
         options: {
           client: {
             clientId: 'order-service',
-            brokers: ['localhost:9092'],
+            brokers: [process.env.KAFKA_BROKER!],
           },
           consumer: {
             groupId: 'order-service-consumer',

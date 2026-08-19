@@ -12,12 +12,19 @@ export class KafkaService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    this.kafkaClient.status.subscribe((status) => {
+      this.logger.log(`Kafka producer status: ${status}`);
+    });
+
     await this.kafkaClient.connect();
 
     this.logger.log('Connected to Kafka');
   }
 
   publishOrderCreated(event: OrderCreatedEvent): void {
-    this.kafkaClient.emit('order.created', event);
+    this.kafkaClient.emit('order.created', {
+      key: String(event.orderId),
+      value: event,
+    });
   }
 }

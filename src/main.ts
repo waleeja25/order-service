@@ -21,6 +21,7 @@ async function bootstrap() {
   );
 
   await app.startAllMicroservices();
+  app.enableShutdownHooks();
 
   await app.listen(port ?? 3003);
 

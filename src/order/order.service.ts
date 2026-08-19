@@ -1,55 +1,35 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import type { ClientGrpc } from '@nestjs/microservices';
-import { CatalogProto, OrderProto, UserProto } from 'microservices-proto';
-import { BaseService, ReferencedEntityMissingException } from '../common';
-import { GRPC_CLIENTS, GRPC_SERVICES } from '../common';
+import { OrderProto } from 'microservices-proto';
+import { BaseService } from '../common';
 
 import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
-
-import { status as GrpcStatus } from '@grpc/grpc-js';
-import { firstValueFrom } from 'rxjs';
+import { OrderReferenceValidatorService } from './order-reference-validator.service';
 
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
 import { KafkaService } from '../kafka';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
-  private readonly userService: UserProto.UserServiceClient;
-  private readonly productService: CatalogProto.ProductServiceClient;
-
   constructor(
     @InjectRepository(Order)
     repository: Repository<Order>,
 
-    @Inject(GRPC_CLIENTS.USER)
-    userClient: ClientGrpc,
-
-    @Inject(GRPC_CLIENTS.CATALOG)
-    catalogClient: ClientGrpc,
-
+    private readonly referenceValidator: OrderReferenceValidatorService,
     private readonly rabbitMQService: RabbitMQService,
     private readonly kafkaService: KafkaService,
   ) {
     super(repository);
-    this.userService = userClient.getService<UserProto.UserServiceClient>(
-      GRPC_SERVICES.USER,
-    );
-
-    this.productService =
-      catalogClient.getService<CatalogProto.ProductServiceClient>(
-        GRPC_SERVICES.PRODUCT,
-      );
   }
 
   override async create(
     request: OrderProto.CreateOrderRequest,
   ): Promise<Order> {
     const [, product] = await Promise.all([
-      this.validateUser(request.userId),
-      this.fetchProduct(request.productId),
+      this.referenceValidator.validateUser(request.userId),
+      this.referenceValidator.fetchProduct(request.productId),
     ]);
 
     const order = await super.create({
@@ -110,42 +90,5 @@ export class OrderService extends BaseService<Order> {
         totalPages: Math.ceil(total / limit),
       },
     };
-  }
-  private isGrpcNotFound(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === GrpcStatus.NOT_FOUND
-    );
-  }
-
-  private async validateUser(userId: number): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.userService.getById({
-          id: userId,
-        }),
-      );
-    } catch (error) {
-      if (this.isGrpcNotFound(error)) {
-        throw new ReferencedEntityMissingException('User', userId);
-      }
-
-      throw error;
-    }
-  }
-
-  private async fetchProduct(productId: number): Promise<CatalogProto.Product> {
-    try {
-      return await firstValueFrom(
-        this.productService.getById({ id: productId }),
-      );
-    } catch (error) {
-      if (this.isGrpcNotFound(error)) {
-        throw new ReferencedEntityMissingException('Product', productId);
-      }
-      throw error;
-    }
   }
 }

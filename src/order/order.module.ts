@@ -6,6 +6,7 @@ import { GRPC_CLIENTS, GRPC_PACKAGE, PROTO_PATH } from '../common';
 
 import { Order } from './entities';
 import { OrderService } from './order.service';
+import { OrderReferenceValidatorService } from './order-reference-validator.service';
 
 import { OrderController } from './order.controller';
 
@@ -39,7 +40,7 @@ import { KafkaModule } from '../kafka';
     ]),
   ],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderService, OrderReferenceValidatorService],
   exports: [OrderService],
 })
 export class OrderModule {}
