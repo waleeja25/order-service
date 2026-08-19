@@ -10,11 +10,13 @@ import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
 
 import { RabbitMQModule } from '../rabbitmq';
+import { KafkaModule } from '../kafka';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order]),
     RabbitMQModule,
+    KafkaModule,
     ClientsModule.register([
       {
         name: GRPC_CLIENTS.USER,

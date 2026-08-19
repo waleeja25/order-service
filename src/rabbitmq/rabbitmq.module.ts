@@ -20,7 +20,7 @@ import { RabbitMQService } from './rabbitmq.service';
             queue: configService.getOrThrow<string>(
               'rabbitmq.notificationQueue',
             ),
-
+            noAssert: true,
             queueOptions: {
               durable: true,
             },
