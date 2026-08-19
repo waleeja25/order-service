@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { OrderCreatedEvent } from './interface';
+import { OrderCreatedEvent } from './events';
 
 @Injectable()
 export class KafkaService implements OnModuleInit {
