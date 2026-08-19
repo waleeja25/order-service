@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
-import { OrderCreatedEvent } from './events';
+import { OrderCreatedEvent, OrderDeletedEvent } from './events';
 
 @Injectable()
 export class KafkaService implements OnModuleInit {
@@ -23,6 +23,12 @@ export class KafkaService implements OnModuleInit {
 
   publishOrderCreated(event: OrderCreatedEvent): void {
     this.kafkaClient.emit('order.created', {
+      key: String(event.orderId),
+      value: event,
+    });
+  }
+  publishOrderDeleted(event: OrderDeletedEvent): void {
+    this.kafkaClient.emit('order.deleted', {
       key: String(event.orderId),
       value: event,
     });

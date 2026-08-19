@@ -93,11 +93,16 @@ export class OrderService extends BaseService<Order> {
   }
 
   async delete(orderId: number): Promise<void> {
-    await this.findById(orderId);
+    const order = await this.findById(orderId);
     await this.repository.delete(orderId);
 
     this.rabbitMQService.publishOrderDeleted({
       orderId,
+    });
+
+    this.kafkaService.publishOrderDeleted({
+      orderId: order.id,
+      totalAmount: order.totalAmount,
     });
   }
 }
