@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GRPC_CLIENTS, GRPC_PACKAGE, PROTO_PATH } from '../common';
 
 import { Order } from './entities';
@@ -18,24 +19,32 @@ import { KafkaModule } from '../kafka';
     TypeOrmModule.forFeature([Order]),
     RabbitMQModule,
     KafkaModule,
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
         name: GRPC_CLIENTS.USER,
-        transport: Transport.GRPC,
-        options: {
-          package: GRPC_PACKAGE.USER,
-          protoPath: PROTO_PATH.USER,
-          url: '127.0.0.1:50051',
-        },
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            package: GRPC_PACKAGE.USER,
+            protoPath: PROTO_PATH.USER,
+            url: configService.getOrThrow<string>('grpcClients.userUrl'),
+          },
+        }),
       },
       {
         name: GRPC_CLIENTS.CATALOG,
-        transport: Transport.GRPC,
-        options: {
-          package: GRPC_PACKAGE.CATALOG,
-          protoPath: PROTO_PATH.CATALOG,
-          url: '127.0.0.1:50052',
-        },
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            package: GRPC_PACKAGE.CATALOG,
+            protoPath: PROTO_PATH.CATALOG,
+            url: configService.getOrThrow<string>('grpcClients.catalogUrl'),
+          },
+        }),
       },
     ]),
   ],

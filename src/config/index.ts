@@ -5,4 +5,6 @@ export * from './env.validation';
 export * from './validate-env';
 export * from './typeorm.config';
 export * from './grpc.config';
+export * from './grpc-clients.config';
 export * from './rabbitmq.config';
+export * from './kafka.config';

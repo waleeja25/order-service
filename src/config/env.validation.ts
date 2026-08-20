@@ -11,6 +11,9 @@ export const envValidationSchema = Joi.object({
 
   GRPC_URL: Joi.string().required(),
 
+  USER_SERVICE_GRPC_URL: Joi.string().required(),
+  CATALOG_SERVICE_GRPC_URL: Joi.string().required(),
+
   RABBITMQ_URL: Joi.string().uri().required(),
   RABBITMQ_NOTIFICATION_QUEUE: Joi.string().required(),
 
