@@ -2,6 +2,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 
 export abstract class BaseEntity {
@@ -19,4 +20,10 @@ export abstract class BaseEntity {
     precision: 6,
   })
   updatedAt!: Date;
+
+  @DeleteDateColumn({
+    type: 'datetime',
+    precision: 6,
+  })
+  deletedAt?: Date;
 }

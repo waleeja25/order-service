@@ -22,7 +22,7 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async findById(id: number): Promise<T> {
-    const entity = await this.repository.findOne({
+    const entity = await this.findOne({
       where: { id } as never,
     });
 
