@@ -92,9 +92,9 @@ export class OrderService extends BaseService<Order> {
     };
   }
 
-  async delete(orderId: number): Promise<void> {
+  override async delete(orderId: number): Promise<void> {
     const order = await this.findById(orderId);
-    await this.repository.delete(orderId);
+    await this.repository.softDelete(orderId);
 
     this.rabbitMQService.publishOrderDeleted({
       orderId,
