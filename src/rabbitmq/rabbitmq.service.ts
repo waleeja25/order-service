@@ -1,5 +1,6 @@
 import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import { RABBITMQ_ROUTING_KEYS } from './constants/rabbitmq.constants';
 
 import { OrderCreatedEvent, OrderDeletedEvent } from './events';
@@ -18,13 +19,24 @@ export class RabbitMQService implements OnModuleInit {
     this.logger.log('RabbitMQ connected successfully');
   }
 
-  publishOrderCreated(data: OrderCreatedEvent): void {
-    this.rabbitMQClient.emit(RABBITMQ_ROUTING_KEYS.ORDER_CREATED, data);
-    console.log('Order-event created');
+  async publishOrderCreated(data: OrderCreatedEvent): Promise<void> {
+    await this.publish(RABBITMQ_ROUTING_KEYS.ORDER_CREATED, data);
   }
 
-  publishOrderDeleted(data: OrderDeletedEvent): void {
-    this.rabbitMQClient.emit(RABBITMQ_ROUTING_KEYS.ORDER_DELETED, data);
-    console.log('Order-event deleted');
+  async publishOrderDeleted(data: OrderDeletedEvent): Promise<void> {
+    await this.publish(RABBITMQ_ROUTING_KEYS.ORDER_DELETED, data);
+  }
+
+  private async publish(routingKey: string, data: unknown): Promise<void> {
+    try {
+      await firstValueFrom(this.rabbitMQClient.emit(routingKey, data));
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish RabbitMQ event "${routingKey}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 }

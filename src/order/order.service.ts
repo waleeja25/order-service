@@ -39,16 +39,17 @@ export class OrderService extends BaseService<Order> {
       totalAmount: product.price * request.quantity,
     });
 
-    this.rabbitMQService.publishOrderCreated({
-      orderId: order.id,
-      userId: order.userId,
-    });
-
-    this.kafkaService.publishOrderCreated({
-      orderId: order.id,
-      userId: order.userId,
-      totalAmount: order.totalAmount,
-    });
+    await Promise.all([
+      this.rabbitMQService.publishOrderCreated({
+        orderId: order.id,
+        userId: order.userId,
+      }),
+      this.kafkaService.publishOrderCreated({
+        orderId: order.id,
+        userId: order.userId,
+        totalAmount: order.totalAmount,
+      }),
+    ]);
 
     return order;
   }
@@ -96,13 +97,14 @@ export class OrderService extends BaseService<Order> {
     const order = await this.findById(orderId);
     await this.repository.softDelete(orderId);
 
-    this.rabbitMQService.publishOrderDeleted({
-      orderId,
-    });
-
-    this.kafkaService.publishOrderDeleted({
-      orderId: order.id,
-      totalAmount: order.totalAmount,
-    });
+    await Promise.all([
+      this.rabbitMQService.publishOrderDeleted({
+        orderId,
+      }),
+      this.kafkaService.publishOrderDeleted({
+        orderId: order.id,
+        totalAmount: order.totalAmount,
+      }),
+    ]);
   }
 }
