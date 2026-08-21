@@ -8,6 +8,7 @@ import {
   GRPC_CLIENTS,
   GRPC_SERVICES,
   ReferencedEntityMissingException,
+  ServiceUnavailableException,
 } from '../common';
 
 @Injectable()
@@ -44,6 +45,10 @@ export class OrderReferenceValidatorService {
         throw new ReferencedEntityMissingException('User', userId);
       }
 
+      if (this.isGrpcUnavailable(error)) {
+        throw new ServiceUnavailableException('User service');
+      }
+
       throw error;
     }
   }
@@ -57,16 +62,29 @@ export class OrderReferenceValidatorService {
       if (this.isGrpcNotFound(error)) {
         throw new ReferencedEntityMissingException('Product', productId);
       }
+
+      if (this.isGrpcUnavailable(error)) {
+        throw new ServiceUnavailableException('Catalog service');
+      }
+
       throw error;
     }
   }
 
   private isGrpcNotFound(error: unknown): boolean {
+    return this.hasGrpcCode(error, GrpcStatus.NOT_FOUND);
+  }
+
+  private isGrpcUnavailable(error: unknown): boolean {
+    return this.hasGrpcCode(error, GrpcStatus.UNAVAILABLE);
+  }
+
+  private hasGrpcCode(error: unknown, code: GrpcStatus): boolean {
     return (
       typeof error === 'object' &&
       error !== null &&
       'code' in error &&
-      error.code === GrpcStatus.NOT_FOUND
+      error.code === code
     );
   }
 }

@@ -21,6 +21,7 @@ import { RabbitMQService } from './rabbitmq.service';
               'rabbitmq.notificationQueue',
             ),
             noAssert: true,
+            persistent: true,
             queueOptions: {
               durable: true,
             },
