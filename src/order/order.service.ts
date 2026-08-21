@@ -39,6 +39,8 @@ export class OrderService extends BaseService<Order> {
       totalAmount: product.price * request.quantity,
     });
 
+    this.logger.log(`Order ${order.id} created successfully`);
+
     await Promise.all([
       this.rabbitMQService.publishOrderCreated({
         orderId: order.id,
@@ -94,8 +96,12 @@ export class OrderService extends BaseService<Order> {
   }
 
   override async delete(orderId: number): Promise<void> {
+    this.logger.log(`Deleting order ${orderId}`);
+
     const order = await this.findById(orderId);
     await this.repository.softDelete(orderId);
+
+    this.logger.log(`Order ${orderId} deleted successfully`);
 
     await Promise.all([
       this.rabbitMQService.publishOrderDeleted({

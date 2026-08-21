@@ -42,6 +42,7 @@ export class KafkaService implements OnModuleInit {
           value: event,
         }),
       );
+      this.logger.log(`Published Kafka event on topic "${topic}"`);
     } catch (error) {
       this.logger.error(
         `Failed to publish Kafka event on topic "${topic}": ${

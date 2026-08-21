@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
 import { EntityNotFoundException } from '@microservices/microservice-common';
 import { BaseEntity } from './base.entity';
 
 @Injectable()
 export abstract class BaseService<T extends BaseEntity> {
+  protected readonly logger = new Logger(this.constructor.name);
+
   protected constructor(protected readonly repository: Repository<T>) {}
 
   protected get entityName(): string {

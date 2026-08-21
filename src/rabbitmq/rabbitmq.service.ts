@@ -30,6 +30,7 @@ export class RabbitMQService implements OnModuleInit {
   private async publish(routingKey: string, data: unknown): Promise<void> {
     try {
       await firstValueFrom(this.rabbitMQClient.emit(routingKey, data));
+      this.logger.log(`Published RabbitMQ event "${routingKey}"`);
     } catch (error) {
       this.logger.error(
         `Failed to publish RabbitMQ event "${routingKey}": ${
