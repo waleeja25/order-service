@@ -50,6 +50,7 @@ export class KafkaService implements OnModuleInit {
         }`,
         error instanceof Error ? error.stack : undefined,
       );
+      throw error;
     }
   }
 }

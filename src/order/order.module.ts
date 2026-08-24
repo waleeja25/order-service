@@ -13,10 +13,11 @@ import { OrderController } from './order.controller';
 
 import { RabbitMQModule } from '../rabbitmq';
 import { KafkaModule } from '../kafka';
+import { OutboxMessage, OutboxService } from '../outbox';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order]),
+    TypeOrmModule.forFeature([Order, OutboxMessage]),
     RabbitMQModule,
     KafkaModule,
     ClientsModule.registerAsync([
@@ -49,7 +50,7 @@ import { KafkaModule } from '../kafka';
     ]),
   ],
   controllers: [OrderController],
-  providers: [OrderService, OrderReferenceValidatorService],
+  providers: [OrderService, OrderReferenceValidatorService, OutboxService],
   exports: [OrderService],
 })
 export class OrderModule {}

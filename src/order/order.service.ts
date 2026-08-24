@@ -8,8 +8,7 @@ import { Order } from './entities';
 import { OrderMapper } from './order.mapper';
 import { OrderReferenceValidatorService } from './order-reference-validator.service';
 
-import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
-import { KafkaService } from '../kafka';
+import { OutboxService } from '../outbox';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -18,8 +17,7 @@ export class OrderService extends BaseService<Order> {
     repository: Repository<Order>,
 
     private readonly referenceValidator: OrderReferenceValidatorService,
-    private readonly rabbitMQService: RabbitMQService,
-    private readonly kafkaService: KafkaService,
+    private readonly outboxService: OutboxService,
   ) {
     super(repository);
   }
@@ -32,27 +30,26 @@ export class OrderService extends BaseService<Order> {
       this.referenceValidator.fetchProduct(request.productId),
     ]);
 
-    const order = await super.create({
-      userId: request.userId,
-      productId: request.productId,
-      quantity: request.quantity,
-      totalAmount: product.price * request.quantity,
+    const order = await this.repository.manager.transaction(async (manager) => {
+      const created = manager.create(Order, {
+        userId: request.userId,
+        productId: request.productId,
+        quantity: request.quantity,
+        totalAmount: product.price * request.quantity,
+      });
+      const saved = await manager.save(created);
+
+      await this.outboxService.enqueue(manager, 'order.created', {
+        orderId: saved.id,
+        userId: saved.userId,
+        totalAmount: saved.totalAmount,
+        createdAt: saved.createdAt.toISOString(),
+      });
+
+      return saved;
     });
 
     this.logger.log(`Order ${order.id} created successfully`);
-
-    await Promise.all([
-      this.rabbitMQService.publishOrderCreated({
-        orderId: order.id,
-        userId: order.userId,
-      }),
-      this.kafkaService.publishOrderCreated({
-        orderId: order.id,
-        userId: order.userId,
-        totalAmount: order.totalAmount,
-        createdAt: order.createdAt.toISOString(),
-      }),
-    ]);
 
     return order;
   }
@@ -100,19 +97,17 @@ export class OrderService extends BaseService<Order> {
     this.logger.log(`Deleting order ${orderId}`);
 
     const order = await this.findById(orderId);
-    await this.repository.softDelete(orderId);
 
-    this.logger.log(`Order ${orderId} deleted successfully`);
+    await this.repository.manager.transaction(async (manager) => {
+      await manager.softDelete(Order, orderId);
 
-    await Promise.all([
-      this.rabbitMQService.publishOrderDeleted({
-        orderId,
-      }),
-      this.kafkaService.publishOrderDeleted({
+      await this.outboxService.enqueue(manager, 'order.deleted', {
         orderId: order.id,
         totalAmount: order.totalAmount,
         createdAt: order.createdAt.toISOString(),
-      }),
-    ]);
+      });
+    });
+
+    this.logger.log(`Order ${orderId} deleted successfully`);
   }
 }
