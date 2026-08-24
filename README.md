@@ -6,13 +6,13 @@ gRPC service for managing orders. Backed by MySQL via TypeORM, with soft delete.
 
 `create`, `getById`, `delete`, `list` (filterable by `userId`/`productId`, paginated). There's no `update` — an order's contents aren't editable after creation.
 
-## Create flow
+## Create/delete flow
 
-1. Calls `user-service` (`getById`) and `catalog-service` (`getById`) over gRPC, concurrently, to confirm the referenced user and product actually exist.
-   - A `NOT_FOUND` from either becomes `ReferencedEntityMissingException` (→ `400` at the gateway).
-   - An `UNAVAILABLE`/`DEADLINE_EXCEEDED` (the dependency is down or too slow) becomes `ServiceUnavailableException` (→ `503`), so a downstream outage doesn't look like a bug in this service.
+1. Calls `user-service` and `catalog-service` over gRPC, concurrently, to confirm the referenced user and product exist.
+   - `NOT_FOUND` → `ReferencedEntityMissingException` (→ `400` at the gateway).
+   - `UNAVAILABLE`/`DEADLINE_EXCEEDED` → `ServiceUnavailableException` (→ `503`), so a downstream outage doesn't look like a bug in this service.
 2. Saves the order.
-3. Publishes `order.created` to **both** RabbitMQ (consumed by `notification-service`) and Kafka (consumed by `analytics-service`), in parallel. `delete` follows the same pattern, publishing `order.deleted`.
+3. Publishes `order.created`/`order.deleted` to **both** RabbitMQ (consumed by `notification-service`) and Kafka (consumed by `analytics-service`), in parallel.
 
 ## Error handling
 
@@ -21,6 +21,19 @@ Business rule violations and not-found lookups throw a typed `DomainException`, 
 ## Stack
 
 NestJS, `@grpc/grpc-js`, TypeORM, MySQL, RabbitMQ, Kafka
+
+## Folder structure
+
+```
+src/
+├── order/                 # controller, service, mapper, entity, validators, reference validator
+├── rabbitmq/               # producer: RabbitMQService, order.created/deleted events
+├── kafka/                  # producer: KafkaService, order.created/deleted events
+├── common/                  # BaseEntity/BaseService, exceptions, filters, gRPC constants
+├── config/
+├── database/                # data source + migrations
+└── health/
+```
 
 ## Running locally
 
