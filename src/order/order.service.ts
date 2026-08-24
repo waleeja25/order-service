@@ -50,6 +50,7 @@ export class OrderService extends BaseService<Order> {
         orderId: order.id,
         userId: order.userId,
         totalAmount: order.totalAmount,
+        createdAt: order.createdAt.toISOString(),
       }),
     ]);
 
@@ -110,6 +111,7 @@ export class OrderService extends BaseService<Order> {
       this.kafkaService.publishOrderDeleted({
         orderId: order.id,
         totalAmount: order.totalAmount,
+        createdAt: order.createdAt.toISOString(),
       }),
     ]);
   }
