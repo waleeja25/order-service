@@ -12,7 +12,7 @@ gRPC service for managing orders. Backed by MySQL via TypeORM, with soft delete.
    - `NOT_FOUND` → `ReferencedEntityMissingException` (→ `400` at the gateway).
    - `UNAVAILABLE`/`DEADLINE_EXCEEDED` → `ServiceUnavailableException` (→ `503`), so a downstream outage doesn't look like a bug in this service.
 2. Saves the order.
-3. Publishes `order.created`/`order.deleted` to **both** RabbitMQ (consumed by `notification-service`) and Kafka (consumed by `analytics-service`), in parallel.
+3. Publishes `order.created`/`order.deleted` to **both** RabbitMQ (consumed by `notification-service`) and Kafka (consumed by `analytics-service`), via the outbox pattern.
 
 ## Error handling
 
@@ -27,6 +27,7 @@ NestJS, `@grpc/grpc-js`, TypeORM, MySQL, RabbitMQ, Kafka
 ```
 src/
 ├── order/                 # controller, service, mapper, entity, validators, reference validator
+├── outbox/                 # outbox pattern: transactional enqueue + relay to RabbitMQ/Kafka
 ├── rabbitmq/               # producer: RabbitMQService, order.created/deleted events
 ├── kafka/                  # producer: KafkaService, order.created/deleted events
 ├── common/                  # BaseEntity/BaseService, exceptions, filters, gRPC constants
